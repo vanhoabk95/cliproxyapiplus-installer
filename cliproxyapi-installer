@@ -1,14 +1,15 @@
 #!/bin/bash
 
-# CLIProxyAPI Linux Installer
-# Linux-specific script that installs, upgrades, and manages CLIProxyAPI
-# Downloads, installs, and upgrades CLIProxyAPI while preserving configuration
+# CLIProxyAPI Plus Linux Installer
+# Linux-specific script that installs, upgrades, and manages CLIProxyAPI Plus
+# Downloads, installs, and upgrades CLIProxyAPI Plus while preserving configuration
+# Plus version adds support for GitHub Copilot and Kiro (AWS CodeWhisperer)
 
 set -euo pipefail
 
 # Configuration
 REPO_OWNER="router-for-me"
-REPO_NAME="CLIProxyAPI"
+REPO_NAME="CLIProxyAPIPlus"
 INSTALL_DIR="$HOME/cliproxyapi"
 API_URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest"
 SCRIPT_NAME="cliproxyapi-installer"
@@ -47,9 +48,9 @@ show_authentication_info() {
     echo
     echo -e "${YELLOW}🔐 IMPORTANT: Authentication Setup Required${NC}"
     echo
-    echo -e "${BLUE}CLIProxyAPI supports authentication for multiple providers:${NC}"
+    echo -e "${BLUE}CLIProxyAPI Plus supports authentication for multiple providers:${NC}"
     echo
-    echo -e "${GREEN}📚 Full Documentation:${NC} https://github.com/router-for-me/CLIProxyAPI"
+    echo -e "${GREEN}📚 Full Documentation:${NC} https://github.com/router-for-me/CLIProxyAPIPlus"
     echo
     echo -e "${YELLOW}Authentication Commands:${NC}"
     echo
@@ -73,6 +74,15 @@ show_authentication_info() {
     echo -e "${GREEN}iFlow:${NC}"
     echo "  ./cli-proxy-api --iflow-login"
     echo "  (OAuth callback on port 11451)"
+    echo
+    echo -e "${GREEN}GitHub Copilot (PLUS):${NC}"
+    echo "  ./cli-proxy-api --copilot-login"
+    echo "  (OAuth-based authentication)"
+    echo
+    echo -e "${GREEN}Kiro/AWS CodeWhisperer (PLUS):${NC}"
+    echo "  Web OAuth: http://localhost:8317/v0/oauth/kiro"
+    echo "  (Browser-based OAuth with AWS Builder ID or IDC)"
+    echo "  (Default port 8317, check your config.yaml for custom port)"
     echo
     echo -e "${YELLOW}💡 Tip: Add --no-browser to any login command to print URL instead"
     echo "     of automatically opening a browser."
@@ -101,7 +111,7 @@ manage_documentation() {
     echo "========================"
 
     if ! is_installed; then
-        log_error "CLIProxyAPI is not installed. Install it first to manage documentation."
+        log_error "CLIProxyAPI Plus is not installed. Install it first to manage documentation."
         exit 1
     fi
 
@@ -225,7 +235,7 @@ show_api_key_setup() {
     echo
     echo -e "${YELLOW}🔑 IMPORTANT: API Keys Required Before First Run${NC}"
     echo
-    echo -e "${BLUE}Before starting CLIProxyAPI, you need to configure API keys in config.yaml:${NC}"
+    echo -e "${BLUE}Before starting CLIProxyAPI Plus, you need to configure API keys in config.yaml:${NC}"
     echo
     echo -e "${GREEN}1. Edit the configuration file:${NC}"
     echo -e "   ${CYAN}nano ${INSTALL_DIR}/config.yaml${NC}"
@@ -257,7 +267,7 @@ show_quick_start() {
     local install_dir="$1"
     echo
     echo -e "${GREEN}🚀 Quick Start Guide:${NC}"
-    echo -e "${BLUE}1. Navigate to CLIProxyAPI:${NC}"
+    echo -e "${BLUE}1. Navigate to CLIProxyAPI Plus:${NC}"
     echo -e "   ${CYAN}cd $install_dir${NC}"
     echo
     
@@ -274,6 +284,8 @@ show_quick_start() {
     echo -e "   ${CYAN}./cli-proxy-api --claude-login${NC}    # For Claude"
     echo -e "   ${CYAN}./cli-proxy-api --qwen-login${NC}      # For Qwen"
     echo -e "   ${CYAN}./cli-proxy-api --iflow-login${NC}     # For iFlow"
+    echo -e "   ${CYAN}./cli-proxy-api --copilot-login${NC}   # For GitHub Copilot (PLUS)"
+    echo -e "   ${CYAN}Browser: http://localhost:8317/v0/oauth/kiro${NC} # For Kiro (PLUS)"
     echo
 
     if check_api_keys; then
@@ -295,7 +307,7 @@ show_quick_start() {
         echo -e "   ${CYAN}systemctl --user status cliproxyapi.service${NC}"
         echo
         echo -e "${BLUE}6. Read the full documentation:${NC}"
-        echo -e "   ${CYAN}https://github.com/router-for-me/CLIProxyAPI${NC}"
+        echo -e "   ${CYAN}https://github.com/router-for-me/CLIProxyAPIPlus${NC}"
     else
         echo -e "${BLUE}3. Start the service:${NC}"
         echo -e "   ${CYAN}./cli-proxy-api${NC}"
@@ -306,7 +318,7 @@ show_quick_start() {
         echo -e "   ${CYAN}systemctl --user status cliproxyapi.service${NC}"
         echo
         echo -e "${BLUE}5. Read the full documentation:${NC}"
-        echo -e "   ${CYAN}https://github.com/router-for-me/CLIProxyAPI${NC}"
+        echo -e "   ${CYAN}https://github.com/router-for-me/CLIProxyAPIPlus${NC}"
     fi
     echo
 }
@@ -381,7 +393,7 @@ extract_release_info() {
         exit 1
     fi
     
-    local expected_filename="CLIProxyAPI_${version}_${os_arch}"
+    local expected_filename="CLIProxyAPIPlus_${version}_${os_arch}"
     local download_url=""
     
     # Handle different file extensions
@@ -736,7 +748,7 @@ install_cliproxyapi() {
     local service_was_running=false
     
     if [[ "$current_version" != "none" ]]; then
-        log_info "Current CLIProxyAPI version: $current_version"
+        log_info "Current CLIProxyAPI Plus version: $current_version"
         is_upgrade=true
         
         # Check if service is running before upgrade
@@ -745,7 +757,7 @@ install_cliproxyapi() {
             log_info "Service is currently running and will be restarted after upgrade"
         fi
     else
-        log_info "CLIProxyAPI not installed, performing fresh installation"
+        log_info "CLIProxyAPI Plus not installed, performing fresh installation"
     fi
     
     # Check dependencies
@@ -770,7 +782,7 @@ install_cliproxyapi() {
     
     # Check if already up to date
     if [[ "$is_upgrade" == true && "$current_version" == "$version" ]]; then
-        log_success "CLIProxyAPI is already up to date (version $version)"
+        log_success "CLIProxyAPI Plus is already up to date (version $version)"
         return
     fi
     
@@ -829,7 +841,7 @@ install_cliproxyapi() {
     
     # Success message
     if [[ "$is_upgrade" == true ]]; then
-        log_success "CLIProxyAPI upgraded from $current_version to $version!"
+        log_success "CLIProxyAPI Plus upgraded from $current_version to $version!"
         log_info "Installation directory: $INSTALL_DIR"
         
         if [[ "$service_was_running" == true ]]; then
@@ -846,10 +858,10 @@ install_cliproxyapi() {
             show_quick_start "$INSTALL_DIR"
         else
             log_info "Your existing configuration has been preserved"
-            log_info "To use CLIProxyAPI: cd $INSTALL_DIR && ./cli-proxy-api --help"
+            log_info "To use CLIProxyAPI Plus: cd $INSTALL_DIR && ./cli-proxy-api --help"
         fi
     else
-        log_success "CLIProxyAPI $version installed successfully!"
+        log_success "CLIProxyAPI Plus $version installed successfully!"
         log_info "Installation directory: $INSTALL_DIR"
         
         # Show authentication information for first-time setup
@@ -863,7 +875,7 @@ show_status() {
     local current_version
     current_version=$(get_current_version)
     
-    echo "CLIProxyAPI Installation Status"
+    echo "CLIProxyAPI Plus Installation Status"
     echo "=============================="
     echo "Install Directory: $INSTALL_DIR"
     echo "Current Version: $current_version"
@@ -913,11 +925,11 @@ show_status() {
 # Uninstall function
 uninstall_cliproxyapi() {
     if [[ ! -d "$INSTALL_DIR" ]]; then
-        log_warning "CLIProxyAPI installation directory not found: $INSTALL_DIR"
+        log_warning "CLIProxyAPI Plus installation directory not found: $INSTALL_DIR"
         exit 0
     fi
     
-    log_info "CLIProxyAPI installation found at: $INSTALL_DIR"
+    log_info "CLIProxyAPI Plus installation found at: $INSTALL_DIR"
     
     # Show what will be removed
     echo
@@ -926,7 +938,7 @@ uninstall_cliproxyapi() {
     echo
     
     # Ask for confirmation
-    read -p "Are you sure you want to remove CLIProxyAPI? (y/N): " -n 1 -r
+    read -p "Are you sure you want to remove CLIProxyAPI Plus? (y/N): " -n 1 -r
     echo
     
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -935,10 +947,10 @@ uninstall_cliproxyapi() {
     fi
     
     # Remove installation directory
-    log_info "Removing CLIProxyAPI installation..."
+    log_info "Removing CLIProxyAPI Plus installation..."
     rm -rf "$INSTALL_DIR"
     
-    log_success "CLIProxyAPI has been uninstalled successfully"
+    log_success "CLIProxyAPI Plus has been uninstalled successfully"
 }
 
 # Cleanup function on exit
@@ -985,7 +997,7 @@ main() {
                     echo -e "${BLUE}Current API keys in config.yaml:${NC}"
                     grep -A 10 "^api-keys:" "${INSTALL_DIR}/config.yaml" | grep -v "^#" | head -10
                     echo
-                    echo -e "${BLUE}You can now start CLIProxyAPI:${NC}"
+                    echo -e "${BLUE}You can now start CLIProxyAPI Plus:${NC}"
                     echo -e "  ${CYAN}cd ${INSTALL_DIR}${NC}"
                     echo -e "  ${CYAN}./cli-proxy-api${NC}"
                     echo
@@ -998,7 +1010,7 @@ main() {
                     show_api_key_setup
                 fi
             else
-                log_error "CLIProxyAPI is not installed"
+                log_error "CLIProxyAPI Plus is not installed"
                 echo "Install it first with: $SCRIPT_NAME install"
             fi
             ;;
@@ -1024,25 +1036,30 @@ main() {
             ;;
         "-h"|"--help")
             cat << EOF
- CLIProxyAPI Linux Installer
+ CLIProxyAPI Plus Linux Installer
 
 Usage: $SCRIPT_NAME [COMMAND] [OPTIONS]
 
 Commands:
-  install, upgrade    Install or upgrade CLIProxyAPI (default)
+  install, upgrade    Install or upgrade CLIProxyAPI Plus (default)
   status             Show current installation status
   auth               Show authentication setup information
   check-config       Check configuration and API keys
   generate-key       Generate new API key and show it
   manage-docs        Manage documentation (update, organize, check consistency)
-  uninstall          Remove CLIProxyAPI completely
+  uninstall          Remove CLIProxyAPI Plus completely
   -h, --help         Show this help message
 
 Description:
-  This Linux-specific script installs, upgrades, or removes CLIProxyAPI.
+  This Linux-specific script installs, upgrades, or removes CLIProxyAPI Plus.
   It can be run from anywhere and automatically detects your Linux architecture.
 
   During upgrades, your config.yaml file is preserved automatically.
+
+  CLIProxyAPI Plus adds support for:
+  - GitHub Copilot (OAuth login)
+  - Kiro/AWS CodeWhisperer (OAuth web authentication)
+  - Enhanced rate limiting and monitoring features
 
 Features:
   - Automatic Linux architecture detection (amd64/arm64)
@@ -1051,11 +1068,16 @@ Features:
   - Automatic API key generation
   - Systemd service file creation
   - Cleans up old versions (keeps latest 2)
+  - OAuth web authentication support
 
 Installation Directory: ~/cliproxyapi/
 
 Supported Platforms:
   - Linux: amd64, arm64
+
+Docker Alternative:
+  For Docker deployment, see:
+  https://github.com/router-for-me/CLIProxyAPIPlus#quick-deployment-with-docker
 
 Examples:
   $SCRIPT_NAME              # Install or upgrade
@@ -1064,6 +1086,8 @@ Examples:
   $SCRIPT_NAME check-config # Check configuration
   $SCRIPT_NAME generate-key # Generate new API key
   $SCRIPT_NAME uninstall    # Remove completely
+
+More Info: https://github.com/router-for-me/CLIProxyAPIPlus
 
 EOF
             ;;

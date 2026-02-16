@@ -1,6 +1,12 @@
-# CLIProxyAPI Linux Installer
+# CLIProxyAPI Plus Linux Installer
 
-A comprehensive Linux installation script for [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) that automates installation, upgrades, and management of the CLIProxyAPI service.
+A comprehensive Linux installation script for [CLIProxyAPI Plus](https://github.com/router-for-me/CLIProxyAPIPlus) that automates installation, upgrades, and management of the CLIProxyAPI Plus service.
+
+**✨ Plus Version Features:**
+- 🚀 **GitHub Copilot Support** - OAuth-based authentication for GitHub Copilot
+- 🔐 **Kiro/AWS CodeWhisperer** - Web-based OAuth authentication with AWS Builder ID or IDC
+- 📊 **Enhanced Monitoring** - Built-in metrics and rate limiting
+- ⚡ **Advanced Features** - Background token refresh, cooldown management, and more
 
 ## Features
 
@@ -15,15 +21,20 @@ A comprehensive Linux installation script for [CLIProxyAPI](https://github.com/r
 
 ## Quick Start
 
-### Install CLIProxyAPI
+### One-Command Install
 
 ```bash
 # Download and run the installer
-curl -fsSL https://raw.githubusercontent.com/brokechubb/cliproxyapi-installer/refs/heads/master/cliproxyapi-installer | bash
+curl -fsSL https://raw.githubusercontent.com/vanhoabk95/cliproxyapiplus-installer/refs/heads/master/cliproxyapi-installer | bash
+```
 
-# Or clone and run manually
-git clone https://github.com/brokechubb/cliproxyapi-installer.git
-cd cliproxyapi-installer
+### Manual Install
+
+```bash
+# Clone and run manually
+git clone https://github.com/vanhoabk95/cliproxyapiplus-installer.git
+cd cliproxyapiplus-installer
+chmod +x cliproxyapi-installer
 ./cliproxyapi-installer
 ```
 
@@ -42,6 +53,10 @@ cd cliproxyapi-installer
    ./cli-proxy-api --claude-login    # For Claude
    ./cli-proxy-api --qwen-login      # For Qwen
    ./cli-proxy-api --iflow-login     # For iFlow
+   ./cli-proxy-api --copilot-login   # For GitHub Copilot (PLUS)
+   
+   # For Kiro/AWS CodeWhisperer (PLUS) - use web browser:
+   # Visit: http://localhost:8317/v0/oauth/kiro
    ```
 
 3. **Start the service**:
@@ -78,13 +93,13 @@ The installer script supports multiple commands:
 
 | Command | Description |
 |---------|-------------|
-| `install` / `upgrade` | Install or upgrade CLIProxyAPI (default) |
+| `install` / `upgrade` | Install or upgrade CLIProxyAPI Plus (default) |
 | `status` | Show current installation status |
 | `auth` | Display authentication setup information |
 | `check-config` | Verify configuration and API keys |
 | `generate-key` | Generate a new API key |
 | `manage-docs` | Manage documentation and check consistency |
-| `uninstall` | Remove CLIProxyAPI completely |
+| `uninstall` | Remove CLIProxyAPI Plus completely |
 | `-h` / `--help` | Show help message |
 
 ### Examples
@@ -112,7 +127,7 @@ The installer script supports multiple commands:
 ## Configuration
 
 ### Installation Directory
-CLIProxyAPI is installed to `~/cliproxyapi/` with the following structure:
+CLIProxyAPI Plus is installed to `~/cliproxyapi/` with the following structure:
 ```
 ~/cliproxyapi/
 ├── cli-proxy-api          # Main executable
@@ -135,15 +150,65 @@ nano config.yaml
 
 ### Authentication Providers
 
-CLIProxyAPI supports multiple AI providers:
+CLIProxyAPI Plus supports multiple AI providers:
 
+#### Standard Providers
 - **Gemini (Google)**: `./cli-proxy-api --login`
 - **OpenAI (Codex/GPT)**: `./cli-proxy-api --codex-login`
 - **Claude (Anthropic)**: `./cli-proxy-api --claude-login`
 - **Qwen (Qwen Chat)**: `./cli-proxy-api --qwen-login`
 - **iFlow**: `./cli-proxy-api --iflow-login`
 
-Add `--no-browser` to any login command to print the URL instead of opening a browser automatically.
+#### Plus-Exclusive Providers ✨
+- **GitHub Copilot**: `./cli-proxy-api --copilot-login`
+  - OAuth-based authentication provided by em4go
+- **Kiro/AWS CodeWhisperer**: Web OAuth at `http://localhost:8317/v0/oauth/kiro`
+  - Browser-based OAuth login with AWS Builder ID or AWS Identity Center (IDC)
+  - Support for token import from Kiro IDE
+  - Provided by fuko2935 and Ravens2121
+
+> **💡 Tip**: Add `--no-browser` to any login command to print the URL instead of opening a browser automatically.
+
+## Alternative Installation Methods
+
+### Docker Deployment
+
+For containerized deployment, CLIProxyAPI Plus also supports Docker:
+
+```bash
+# One-command Docker deployment
+mkdir -p ~/cli-proxy && cd ~/cli-proxy
+
+# Create docker-compose.yml
+cat > docker-compose.yml << 'EOF'
+services:
+  cli-proxy-api:
+    image: eceasy/cli-proxy-api-plus:latest
+    container_name: cli-proxy-api-plus
+    ports:
+      - "8317:8317"
+    volumes:
+      - ./config.yaml:/CLIProxyAPI/config.yaml
+      - ./auths:/root/.cli-proxy-api
+      - ./logs:/CLIProxyAPI/logs
+    restart: unless-stopped
+EOF
+
+# Download example config
+curl -o config.yaml https://raw.githubusercontent.com/router-for-me/CLIProxyAPIPlus/main/config.example.yaml
+
+# Pull and start
+docker compose pull && docker compose up -d
+```
+
+See the [official Docker guide](https://github.com/router-for-me/CLIProxyAPIPlus#quick-deployment-with-docker) for more details.
+
+### Choosing Your Installation Method
+
+| Method | Best For | Pros | Cons |
+|--------|----------|------|------|
+| **This Installer** | Native Linux deployment | Direct execution, systemd integration, no container overhead | Linux only, requires dependencies |
+| **Docker** | Cross-platform, containerized | Isolated environment, easy updates, works on Windows/Mac | Requires Docker, slight overhead |
 
 ## System Requirements
 
@@ -216,16 +281,16 @@ When you run `./cliproxyapi-installer upgrade`, the installer will:
 You'll see output like:
 ```
 [INFO] Service is currently running and will be restarted after upgrade
-[INFO] Stopping CLIProxyAPI service...
+[INFO] Stopping CLIProxyAPI Plus service...
 [SUCCESS] Service stopped
 ...
-[INFO] Restarting CLIProxyAPI service...
+[INFO] Restarting CLIProxyAPI Plus service...
 [SUCCESS] Service restarted successfully
 ```
 
 ### Autostart Configuration
 
-**To enable CLIProxyAPI to start automatically on system boot:**
+**To enable CLIProxyAPI Plus to start automatically on system boot:**
 
 ```bash
 # Enable the service for automatic startup on user login
@@ -410,20 +475,27 @@ During upgrades, the installer provides intelligent service management:
 
 ## License
 
-This installer script is released under the same license as CLIProxyAPI.
+This installer script is released under the same license as CLIProxyAPI Plus (MIT License).
 
 ## Support
 
-- **CLIProxyAPI Documentation**: https://github.com/router-for-me/CLIProxyAPI
-- **Installer Issues**: https://github.com/brokechubb/cliproxyapi-installer/issues
+- **CLIProxyAPI Plus Documentation**: https://github.com/router-for-me/CLIProxyAPIPlus
+- **Installer Issues**: https://github.com/vanhoabk95/cliproxyapiplus-installer/issues
 - **General Help**: Run `./cliproxyapi-installer --help`
+- **Docker Deployment**: See [Quick Deployment with Docker](https://github.com/router-for-me/CLIProxyAPIPlus#quick-deployment-with-docker)
 
 ## Changelog
 
 ### Recent Improvements
 
+#### ✨ **CLIProxyAPI Plus Support**
+- **Plus Version Integration**: Full support for CLIProxyAPI Plus enhanced features
+- **GitHub Copilot**: OAuth-based authentication for GitHub Copilot
+- **Kiro/AWS CodeWhisperer**: Web-based OAuth authentication with AWS Builder ID or IDC
+- **Enhanced Provider Support**: All Plus-exclusive providers properly configured
+
 #### ✅ **Smart Service Management**
-- **Automatic Service Detection**: Installer detects if CLIProxyAPI service is running before upgrades
+- **Automatic Service Detection**: Installer detects if CLIProxyAPI Plus service is running before upgrades
 - **Graceful Service Handling**: Service is properly stopped before upgrade and restarted afterward
 - **State Preservation**: Service maintains its previous running state after upgrades
 - **Enhanced Logging**: Clear feedback about service status throughout the upgrade process
@@ -441,4 +513,14 @@ This installer script is released under the same license as CLIProxyAPI.
 
 ---
 
-**Note**: This installer is specifically for Linux systems. For other operating systems, please refer to the main CLIProxyAPI repository.
+**Note**: This installer is specifically for Linux systems. For Docker deployment or other operating systems, please refer to the main [CLIProxyAPI Plus repository](https://github.com/router-for-me/CLIProxyAPIPlus).
+
+## About CLIProxyAPI Plus
+
+CLIProxyAPI Plus is the enhanced version of CLIProxyAPI, adding third-party provider support maintained by community contributors:
+
+- **GitHub Copilot support** (OAuth login) - by em4go
+- **Kiro/AWS CodeWhisperer support** (OAuth web authentication) - by fuko2935 and Ravens2121
+- **Enhanced features**: Rate limiting, metrics & monitoring, background token refresh, and more
+
+All Plus features stay in lockstep with the mainline CLIProxyAPI features while providing additional third-party integrations.
