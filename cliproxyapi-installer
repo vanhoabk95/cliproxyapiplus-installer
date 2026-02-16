@@ -608,12 +608,17 @@ setup_config() {
     
     local config="${INSTALL_DIR}/config.yaml"
     local example_config="${version_dir}/config.example.yaml"
-    local executable="${version_dir}/cli-proxy-api"
+    local executable="${version_dir}/cli-proxy-api-plus"
     
-    # Copy executable to main directory
+    # Copy executable to main directory (try both possible names)
     if [[ -f "$executable" ]]; then
         cp "$executable" "${INSTALL_DIR}/cli-proxy-api"
         log_success "Copied executable to ${INSTALL_DIR}/cli-proxy-api"
+    elif [[ -f "${version_dir}/cli-proxy-api" ]]; then
+        cp "${version_dir}/cli-proxy-api" "${INSTALL_DIR}/cli-proxy-api"
+        log_success "Copied executable to ${INSTALL_DIR}/cli-proxy-api"
+    else
+        log_error "Could not find cli-proxy-api-plus or cli-proxy-api executable in ${version_dir}"
     fi
     
     # PRIORITY 1: If we have a backup from this upgrade, restore it
@@ -733,10 +738,12 @@ make_executable() {
     local version_dir="$1"
 
     local binary
-    binary=$(find "$version_dir" -name "CLIProxyAPI" -o -name "cli-proxy-api" -type f | head -1)
+    binary=$(find "$version_dir" -name "CLIProxyAPI" -o -name "cli-proxy-api" -o -name "cli-proxy-api-plus" -type f | head -1)
     if [[ -n "$binary" ]]; then
         chmod +x "$binary"
-        log_success "Made CLIProxyAPI binary executable"
+        log_success "Made CLIProxyAPI Plus binary executable"
+    else
+        log_warning "Could not find binary to make executable"
     fi
 }
 
@@ -823,7 +830,14 @@ install_cliproxyapi() {
     setup_config "$version_dir" "$backup_file"
     
     # Make main executable executable
-    chmod +x "${INSTALL_DIR}/cli-proxy-api"
+    if [[ -f "${INSTALL_DIR}/cli-proxy-api" ]]; then
+        chmod +x "${INSTALL_DIR}/cli-proxy-api"
+        log_success "Made main executable executable"
+    else
+        log_error "Main executable not found at ${INSTALL_DIR}/cli-proxy-api"
+        log_error "Please check the installation directory: ${version_dir}"
+        exit 1
+    fi
     
     # Create/update systemd service file
     create_systemd_service "$INSTALL_DIR"
