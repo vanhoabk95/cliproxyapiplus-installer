@@ -1,6 +1,6 @@
-# CLIProxyAPI Plus Linux Installer
+# CLIProxyAPI Plus Installer
 
-A comprehensive Linux installation script for [CLIProxyAPI Plus](https://github.com/router-for-me/CLIProxyAPIPlus) that automates installation, upgrades, and management of the CLIProxyAPI Plus service.
+A comprehensive installation script for [CLIProxyAPI Plus](https://github.com/router-for-me/CLIProxyAPIPlus) that automates installation, upgrades, and management of the CLIProxyAPI Plus service on **Linux** and **Windows**.
 
 **✨ Plus Version Features:**
 - 🚀 **GitHub Copilot Support** - OAuth-based authentication for GitHub Copilot
@@ -10,25 +10,25 @@ A comprehensive Linux installation script for [CLIProxyAPI Plus](https://github.
 
 ## Features
 
-- 🚀 **Automatic Installation** - Detects your Linux architecture and downloads the latest version
-- 🔄 **Smart Upgrades** - Preserves your configuration and automatically manages systemd service during upgrades
+- 🚀 **Automatic Installation** - Detects your architecture and downloads the latest version
+- 🔄 **Smart Upgrades** - Preserves your configuration during upgrades
 - 🔑 **API Key Management** - Automatically generates secure API keys
-- 🛡️ **Systemd Service** - Creates and manages systemd service files with proper lifecycle management
+- 🛡️ **Service Management** - Systemd (Linux) or NSSM Windows service support
 - 📊 **Status Monitoring** - Check installation status and configuration
 - 🧹 **Cleanup** - Automatically removes old versions (keeps latest 2)
-- 📚 **Documentation Management** - Built-in documentation tools
 - ⚡ **Zero-Downtime Updates** - Service is properly stopped and restarted during upgrades
+- 🖥️ **Cross-Platform** - Supports Linux (amd64/arm64) and Windows (amd64/arm64)
 
 ## Quick Start
 
-### One-Command Install
+### Linux - One-Command Install
 
 ```bash
 # Download and run the installer
 curl -fsSL https://raw.githubusercontent.com/vanhoabk95/cliproxyapiplus-installer/refs/heads/master/cliproxyapi-installer | bash
 ```
 
-### Manual Install
+### Linux - Manual Install
 
 ```bash
 # Clone and run manually
@@ -38,58 +38,88 @@ chmod +x cliproxyapi-installer
 ./cliproxyapi-installer
 ```
 
+### Windows - Install
+
+```cmd
+:: Clone and run the installer
+git clone https://github.com/vanhoabk95/cliproxyapiplus-installer.git
+cd cliproxyapiplus-installer
+cliproxyapi-installer.bat
+```
+
+After installation, to run as a Windows service (requires Administrator):
+```cmd
+cd %USERPROFILE%\cliproxyapi
+install_service.bat
+```
+
 ### After Installation
 
 1. **Configure API keys** (if not automatically generated):
+
+   Linux:
    ```bash
-   cd ~/cliproxyapi
-   nano config.yaml
+   cd ~/cliproxyapi && nano config.yaml
+   ```
+   Windows:
+   ```cmd
+   cd %USERPROFILE%\cliproxyapi
+   notepad config.yaml
    ```
 
 2. **Set up authentication** (choose one or more):
    ```bash
-   ./cli-proxy-api --login           # For Gemini
-   ./cli-proxy-api --codex-login     # For OpenAI
-   ./cli-proxy-api --claude-login    # For Claude
-   ./cli-proxy-api --qwen-login      # For Qwen
-   ./cli-proxy-api --iflow-login     # For iFlow
-   ./cli-proxy-api --copilot-login   # For GitHub Copilot (PLUS)
+   cli-proxy-api-plus --login           # For Gemini
+   cli-proxy-api-plus --codex-login     # For OpenAI
+   cli-proxy-api-plus --claude-login    # For Claude
+   cli-proxy-api-plus --qwen-login      # For Qwen
+   cli-proxy-api-plus --iflow-login     # For iFlow
+   cli-proxy-api-plus --copilot-login   # For GitHub Copilot (PLUS)
    
    # For Kiro/AWS CodeWhisperer (PLUS) - use web browser:
    # Visit: http://localhost:8317/v0/oauth/kiro
    ```
 
 3. **Start the service**:
-     ```bash
-     # Direct execution
-     ./cli-proxy-api
 
-     # Or as a systemd service (recommended)
-     systemctl --user enable cliproxyapi.service
-     systemctl --user start cliproxyapi.service
-     systemctl --user status cliproxyapi.service
-     ```
+   **Linux:**
+   ```bash
+   # Direct execution
+   ./cli-proxy-api
+
+   # Or as a systemd service (recommended)
+   systemctl --user enable cliproxyapi.service
+   systemctl --user start cliproxyapi.service
+   systemctl --user status cliproxyapi.service
+   ```
+
+   **Windows:**
+   ```cmd
+   :: Direct execution
+   cli-proxy-api-plus.exe
+
+   :: Or install as a Windows service (run as Administrator)
+   install_service.bat
+   ```
 
 4. **Enable autostart on boot** (recommended):
-     ```bash
-     # Enable the service to start automatically on user login
-     systemctl --user enable cliproxyapi.service
-     
-     # Verify it's enabled
-     systemctl --user is-enabled cliproxyapi.service
-     ```
 
-> **💡 Pro Tip**: The installer automatically manages the systemd service during upgrades. If the service is running when you upgrade, it will be gracefully stopped, updated, and restarted automatically.
+   **Linux:**
+   ```bash
+   systemctl --user enable cliproxyapi.service
+   ```
+
+   **Windows:** The Windows service is set to auto-start by default when installed via `install_service.bat`.
+
+> **💡 Pro Tip**: The installer automatically manages running processes during upgrades. If the service is running when you upgrade, it will be gracefully stopped, updated, and restarted automatically.
 
 ## Usage
 
-The installer script supports multiple commands:
+### Linux
 
 ```bash
 ./cliproxyapi-installer [COMMAND]
 ```
-
-### Commands
 
 | Command | Description |
 |---------|-------------|
@@ -102,32 +132,46 @@ The installer script supports multiple commands:
 | `uninstall` | Remove CLIProxyAPI Plus completely |
 | `-h` / `--help` | Show help message |
 
+### Windows
+
+```cmd
+cliproxyapi-installer.bat [COMMAND]
+```
+
+| Command | Description |
+|---------|-------------|
+| `install` / `upgrade` | Install or upgrade CLIProxyAPI Plus (default) |
+| `status` | Show current installation status |
+| `uninstall` | Remove CLIProxyAPI Plus completely |
+| `help` / `-h` / `--help` | Show help message |
+
+After installation, manage the Windows service with:
+- `install_service.bat` - Install and configure NSSM Windows service (run as Admin)
+- `uninstall_service.bat` - Remove the Windows service (run as Admin)
+
 ### Examples
 
 ```bash
-# Install or upgrade to the latest version
+# Linux: Install or upgrade
 ./cliproxyapi-installer
 
-# Check current installation status
+# Linux: Check status
 ./cliproxyapi-installer status
+```
 
-# Verify your configuration
-./cliproxyapi-installer check-config
+```cmd
+:: Windows: Install or upgrade
+cliproxyapi-installer.bat
 
-# Generate a new API key
-./cliproxyapi-installer generate-key
-
-# Show authentication setup info
-./cliproxyapi-installer auth
-
-# Uninstall completely
-./cliproxyapi-installer uninstall
+:: Windows: Check status
+cliproxyapi-installer.bat status
 ```
 
 ## Configuration
 
 ### Installation Directory
-CLIProxyAPI Plus is installed to `~/cliproxyapi/` with the following structure:
+
+**Linux:** `~/cliproxyapi/`
 ```
 ~/cliproxyapi/
 ├── cli-proxy-api          # Main executable
@@ -136,6 +180,19 @@ CLIProxyAPI Plus is installed to `~/cliproxyapi/` with the following structure:
 ├── version.txt            # Current version info
 ├── x.x.x/                 # Version-specific directory
 └── config_backup/         # Configuration backups
+```
+
+**Windows:** `%USERPROFILE%\cliproxyapi\`
+```
+%USERPROFILE%\cliproxyapi\
+├── cli-proxy-api-plus.exe  # Main executable
+├── config.yaml             # Configuration file
+├── install_service.bat     # NSSM service installer
+├── uninstall_service.bat   # NSSM service uninstaller
+├── nssm-2.24\              # NSSM service manager
+├── version.txt             # Current version info
+├── x.x.x\                  # Version-specific directory
+└── config_backup\          # Configuration backups
 ```
 
 ### API Keys
@@ -207,16 +264,23 @@ See the [official Docker guide](https://github.com/router-for-me/CLIProxyAPIPlus
 
 | Method | Best For | Pros | Cons |
 |--------|----------|------|------|
-| **This Installer** | Native Linux deployment | Direct execution, systemd integration, no container overhead | Linux only, requires dependencies |
-| **Docker** | Cross-platform, containerized | Isolated environment, easy updates, works on Windows/Mac | Requires Docker, slight overhead |
+| **Linux Installer** | Native Linux deployment | Direct execution, systemd integration, no container overhead | Linux only |
+| **Windows Installer** | Native Windows deployment | NSSM service management, direct execution | Windows only |
+| **Docker** | Cross-platform, containerized | Isolated environment, easy updates | Requires Docker, slight overhead |
 
 ## System Requirements
 
+### Linux
 - **Operating System**: Linux (amd64, arm64)
 - **Required Tools**: `curl` or `wget`, `tar`
 - **Shell**: Bash
 
-### Installing Dependencies
+### Windows
+- **Operating System**: Windows 10 1803+ or Windows Server 2019+ (amd64, arm64)
+- **Required Tools**: `curl` and `tar` (included with Windows 10+), PowerShell
+- **For service management**: Administrator privileges for `install_service.bat`
+
+### Installing Dependencies (Linux)
 
 **Ubuntu/Debian:**
 ```bash
@@ -412,17 +476,40 @@ ls -la ~/.config/systemd/user/cliproxyapi.service
     systemctl --user restart cliproxyapi.service
     ```
 
+9. **Windows: Service Won't Install** (Windows)
+    ```cmd
+    :: Make sure to run as Administrator
+    :: Right-click install_service.bat -> Run as Administrator
+
+    :: Check if NSSM is present
+    dir %USERPROFILE%\cliproxyapi\nssm-2.24\win64\nssm.exe
+    ```
+
+10. **Windows: Upgrade Fails** (Windows)
+    ```cmd
+    :: Stop the service first
+    net stop CLIProxyAPI
+
+    :: Then run the installer
+    cliproxyapi-installer.bat upgrade
+    ```
+
 ### Getting Help
 
 ```bash
-# Show all available commands
+# Linux: Show all available commands
 ./cliproxyapi-installer --help
 
-# Check installation status
+# Linux: Check installation status
 ./cliproxyapi-installer status
+```
 
-# Verify configuration
-./cliproxyapi-installer check-config
+```cmd
+:: Windows: Show all available commands
+cliproxyapi-installer.bat help
+
+:: Windows: Check installation status
+cliproxyapi-installer.bat status
 ```
 
 ## Security Considerations
@@ -488,6 +575,12 @@ This installer script is released under the same license as CLIProxyAPI Plus (MI
 
 ### Recent Improvements
 
+#### ✨ **Windows Installer**
+- **Windows Batch Installer**: New `cliproxyapi-installer.bat` for Windows systems
+- **Auto-Download**: Downloads latest release from GitHub with architecture detection
+- **NSSM Integration**: Copies `install_service.bat`, `uninstall_service.bat`, and NSSM into the install directory
+- **Config Preservation**: Same upgrade-safe config handling as the Linux installer
+
 #### ✨ **CLIProxyAPI Plus Support**
 - **Plus Version Integration**: Full support for CLIProxyAPI Plus enhanced features
 - **GitHub Copilot**: OAuth-based authentication for GitHub Copilot
@@ -513,7 +606,7 @@ This installer script is released under the same license as CLIProxyAPI Plus (MI
 
 ---
 
-**Note**: This installer is specifically for Linux systems. For Docker deployment or other operating systems, please refer to the main [CLIProxyAPI Plus repository](https://github.com/router-for-me/CLIProxyAPIPlus).
+**Note**: This installer supports Linux and Windows systems. For Docker deployment, please refer to the main [CLIProxyAPI Plus repository](https://github.com/router-for-me/CLIProxyAPIPlus).
 
 ## About CLIProxyAPI Plus
 
