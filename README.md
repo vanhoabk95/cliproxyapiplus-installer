@@ -49,7 +49,7 @@ cliproxyapi-installer.bat
 
 After installation, to run as a Windows service (requires Administrator):
 ```cmd
-cd %USERPROFILE%\cliproxyapi
+:: Run install_service.bat from the same folder (as Administrator)
 install_service.bat
 ```
 
@@ -61,9 +61,8 @@ install_service.bat
    ```bash
    cd ~/cliproxyapi && nano config.yaml
    ```
-   Windows:
+   Windows (from the installer folder):
    ```cmd
-   cd %USERPROFILE%\cliproxyapi
    notepad config.yaml
    ```
 
@@ -182,17 +181,18 @@ cliproxyapi-installer.bat status
 └── config_backup/         # Configuration backups
 ```
 
-**Windows:** `%USERPROFILE%\cliproxyapi\`
+**Windows:** Same folder as the installer script (e.g. where you cloned the repo)
 ```
-%USERPROFILE%\cliproxyapi\
-├── cli-proxy-api-plus.exe  # Main executable
-├── config.yaml             # Configuration file
-├── install_service.bat     # NSSM service installer
-├── uninstall_service.bat   # NSSM service uninstaller
-├── nssm-2.24\              # NSSM service manager
-├── version.txt             # Current version info
-├── x.x.x\                  # Version-specific directory
-└── config_backup\          # Configuration backups
+cliproxyapiplus-installer\
+├── cliproxyapi-installer.bat  # This installer script
+├── cli-proxy-api-plus.exe     # Main executable (downloaded)
+├── config.yaml                # Configuration file (generated)
+├── install_service.bat        # NSSM service installer
+├── uninstall_service.bat      # NSSM service uninstaller
+├── nssm-2.24\                 # NSSM service manager
+├── version.txt                # Current version info
+├── x.x.x\                     # Version-specific directory
+└── config_backup\             # Configuration backups
 ```
 
 ### API Keys

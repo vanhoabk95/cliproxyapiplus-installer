@@ -10,7 +10,8 @@ setlocal EnableDelayedExpansion
 :: Configuration
 set REPO_OWNER=router-for-me
 set REPO_NAME=CLIProxyAPIPlus
-set INSTALL_DIR=%USERPROFILE%\cliproxyapi
+set INSTALL_DIR=%~dp0
+set INSTALL_DIR=%INSTALL_DIR:~0,-1%
 set API_URL=https://api.github.com/repos/%REPO_OWNER%/%REPO_NAME%/releases/latest
 set SCRIPT_NAME=%~nx0
 
@@ -116,12 +117,23 @@ if "%DOWNLOAD_URL%"=="" (
     exit /b 1
 )
 
-:: Stop running processes before upgrade
+:: Stop Windows service and running processes before upgrade
+set SERVICE_WAS_RUNNING=0
 if "%IS_UPGRADE%"=="1" (
-    echo [INFO] Checking for running CLIProxyAPI processes...
+    sc query CLIProxyAPI >nul 2>&1
+    if !errorLevel! equ 0 (
+        for /f "tokens=3 delims=: " %%S in ('sc query CLIProxyAPI ^| findstr "STATE"') do set SVC_STATE=%%S
+        if "!SVC_STATE!"=="RUNNING" (
+            set SERVICE_WAS_RUNNING=1
+            echo [INFO] Stopping CLIProxyAPI Windows service...
+            net stop CLIProxyAPI >nul 2>&1
+            timeout /t 3 /nobreak >nul
+            echo [SUCCESS] Service stopped
+        )
+    )
     tasklist /FI "IMAGENAME eq cli-proxy-api-plus.exe" 2>nul | find /I "cli-proxy-api-plus.exe" >nul 2>&1
     if !errorLevel! equ 0 (
-        echo [INFO] Stopping running CLIProxyAPI processes...
+        echo [INFO] Stopping remaining CLIProxyAPI processes...
         taskkill /F /IM cli-proxy-api-plus.exe >nul 2>&1
         timeout /t 2 /nobreak >nul
         echo [SUCCESS] Processes stopped
@@ -142,8 +154,7 @@ if "%IS_UPGRADE%"=="1" (
     )
 )
 
-:: Create install directory
-if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
+:: Set version directory
 set VERSION_DIR=%INSTALL_DIR%\%VERSION%
 
 :: Download
@@ -180,23 +191,6 @@ if exist "%VERSION_DIR%\cli-proxy-api-plus.exe" (
     echo [ERROR] cli-proxy-api-plus.exe not found in %VERSION_DIR%
     pause
     exit /b 1
-)
-
-:: Copy service management scripts and nssm
-set INSTALLER_DIR=%~dp0
-set INSTALLER_DIR=%INSTALLER_DIR:~0,-1%
-
-if exist "%INSTALLER_DIR%\install_service.bat" (
-    copy /Y "%INSTALLER_DIR%\install_service.bat" "%INSTALL_DIR%\install_service.bat" >nul
-    echo [SUCCESS] Copied install_service.bat
-)
-if exist "%INSTALLER_DIR%\uninstall_service.bat" (
-    copy /Y "%INSTALLER_DIR%\uninstall_service.bat" "%INSTALL_DIR%\uninstall_service.bat" >nul
-    echo [SUCCESS] Copied uninstall_service.bat
-)
-if exist "%INSTALLER_DIR%\nssm-2.24" (
-    xcopy /E /I /Y /Q "%INSTALLER_DIR%\nssm-2.24" "%INSTALL_DIR%\nssm-2.24" >nul
-    echo [SUCCESS] Copied nssm-2.24
 )
 
 :: Setup configuration
@@ -243,6 +237,20 @@ for /f "delims=" %%D in ('dir /AD /B /O-N "%INSTALL_DIR%" 2^>nul ^| findstr /R "
     )
 )
 
+:: Restart service if it was running before upgrade
+if "%SERVICE_WAS_RUNNING%"=="1" (
+    echo [INFO] Restarting CLIProxyAPI Windows service...
+    net start CLIProxyAPI >nul 2>&1
+    timeout /t 2 /nobreak >nul
+    sc query CLIProxyAPI 2>nul | findstr "RUNNING" >nul 2>&1
+    if !errorLevel! equ 0 (
+        echo [SUCCESS] Service restarted successfully
+    ) else (
+        echo [WARNING] Service may not have started properly.
+        echo          Check with: sc query CLIProxyAPI
+    )
+)
+
 :: Success message
 echo.
 if "%IS_UPGRADE%"=="1" (
@@ -275,14 +283,28 @@ echo.
 :: Show next steps
 echo  Quick Start:
 echo  -------------------------------------------------------
-echo  1. cd %INSTALL_DIR%
-echo  2. Edit config.yaml to configure API keys (if needed)
-echo  3. Run authentication commands above for your providers
-echo  4. Start directly: cli-proxy-api-plus.exe
-echo  5. Or install as Windows service:
-echo     Run install_service.bat as Administrator
+echo  1. Edit config.yaml to configure API keys (if needed)
+echo  2. Run authentication commands above for your providers
+echo  3. Start directly: cli-proxy-api-plus.exe
+echo  4. Or install as Windows service (see below)
 echo.
 echo  Documentation: https://github.com/router-for-me/CLIProxyAPIPlus
+echo.
+
+:: Offer to install Windows service
+if exist "%INSTALL_DIR%\install_service.bat" (
+    set /p INSTALL_SVC="Install as Windows service now? Requires Administrator. (Y/N): "
+    if /i "!INSTALL_SVC!"=="Y" (
+        echo.
+        echo [INFO] Launching install_service.bat with Administrator privileges...
+        powershell -NoProfile -Command "Start-Process -FilePath '%INSTALL_DIR%\install_service.bat' -WorkingDirectory '%INSTALL_DIR%' -Verb RunAs"
+        if !errorLevel! neq 0 (
+            echo [WARNING] Could not launch with elevated privileges.
+            echo          Please right-click install_service.bat and select 'Run as Administrator'.
+        )
+    )
+)
+
 echo.
 pause
 goto :eof
@@ -357,14 +379,15 @@ goto :eof
 :: ============================================================
 :cmd_uninstall
 
-if not exist "%INSTALL_DIR%" (
-    echo [WARNING] CLIProxyAPI Plus installation directory not found: %INSTALL_DIR%
+if not exist "%INSTALL_DIR%\version.txt" (
+    echo [WARNING] CLIProxyAPI Plus is not installed in: %INSTALL_DIR%
     pause
     goto :eof
 )
 
+set /p CURRENT_VERSION=<"%INSTALL_DIR%\version.txt"
 echo.
-echo  CLIProxyAPI Plus installation found at: %INSTALL_DIR%
+echo  CLIProxyAPI Plus v%CURRENT_VERSION% found at: %INSTALL_DIR%
 echo.
 
 :: Check if service is installed and remove it first
@@ -402,9 +425,24 @@ if /i "%CONFIRM%" neq "Y" (
 :: Stop any running processes
 taskkill /F /IM cli-proxy-api-plus.exe >nul 2>&1
 
-echo [INFO] Removing CLIProxyAPI Plus installation...
-rmdir /S /Q "%INSTALL_DIR%"
+echo [INFO] Removing CLIProxyAPI Plus installed files...
+
+:: Remove downloaded files (keep installer scripts, nssm, and git files)
+del "%INSTALL_DIR%\cli-proxy-api-plus.exe" >nul 2>&1
+del "%INSTALL_DIR%\config.yaml" >nul 2>&1
+del "%INSTALL_DIR%\version.txt" >nul 2>&1
+
+:: Remove version directories
+for /f "delims=" %%D in ('dir /AD /B "%INSTALL_DIR%" 2^>nul ^| findstr /R "[0-9]*\.[0-9]*\.[0-9]*"') do (
+    rmdir /S /Q "%INSTALL_DIR%\%%D" 2>nul
+)
+
+:: Remove backup and logs directories
+if exist "%INSTALL_DIR%\config_backup" rmdir /S /Q "%INSTALL_DIR%\config_backup"
+if exist "%INSTALL_DIR%\logs" rmdir /S /Q "%INSTALL_DIR%\logs"
+
 echo [SUCCESS] CLIProxyAPI Plus has been uninstalled successfully.
+echo [INFO] Installer scripts and nssm have been kept in place.
 echo.
 pause
 goto :eof
@@ -438,7 +476,7 @@ echo    - GitHub Copilot (OAuth login)
 echo    - Kiro/AWS CodeWhisperer (OAuth web authentication)
 echo    - Enhanced rate limiting and monitoring features
 echo.
-echo  Installation Directory: %USERPROFILE%\cliproxyapi\
+echo  Installation Directory: Same folder as this script
 echo.
 echo  Service Management:
 echo    After installation, use install_service.bat and
